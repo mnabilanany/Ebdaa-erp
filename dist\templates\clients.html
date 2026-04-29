@@ -1,0 +1,112 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}إدارة العملاء{% endblock %}
+{% block content %}
+
+<!-- Add Client Form -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header">
+    <span class="card-title">👤 إضافة عميل جديد</span>
+  </div>
+  <form method="POST" action="{{ url_for('add_client') }}">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>الاسم الكامل *</label>
+        <input type="text" name="full_name" required placeholder="أدخل اسم العميل">
+      </div>
+      <div class="form-group">
+        <label>الرقم القومي</label>
+        <input type="text" name="national_id" placeholder="الرقم القومي أو جواز السفر">
+      </div>
+      <div class="form-group">
+        <label>📱 رقم الهاتف</label>
+        <input type="text" name="phone" placeholder="01xxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label>📧 البريد الإلكتروني</label>
+        <input type="email" name="email" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>📍 العنوان</label>
+        <input type="text" name="address" placeholder="العنوان بالتفصيل">
+      </div>
+      <div class="form-group">
+        <label>📝 ملاحظات</label>
+        <input type="text" name="notes" placeholder="ملاحظات إضافية">
+      </div>
+    </div>
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary">✅ إضافة العميل</button>
+    </div>
+  </form>
+</div>
+
+<!-- Toolbar & Search -->
+<div class="toolbar">
+  <form method="GET" style="display:contents">
+    <input type="text" name="q" value="{{ kw }}" placeholder="🔍 بحث بالاسم أو الهاتف أو البريد...">
+    <button type="submit" class="btn btn-primary btn-sm">بحث</button>
+  </form>
+  <div class="spacer"></div>
+  <span class="badge badge-info">{{ rows|length }} عميل</span>
+</div>
+
+<!-- Clients Table -->
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>👤 الاسم</th>
+          <th>🆔 الرقم القومي</th>
+          <th>📱 الهاتف</th>
+          <th>📧 البريد</th>
+          <th>📍 العنوان</th>
+          <th>📅 تاريخ التسجيل</th>
+          <th>⚙️ الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="muted">{{ r.id }}</td>
+          <td><strong>{{ r.full_name }}</strong></td>
+          <td class="muted">{{ r.national_id or '—' }}</td>
+          <td>{{ r.phone or '—' }}</td>
+          <td class="muted">{{ r.email or '—' }}</td>
+          <td class="muted">{{ r.address or '—' }}</td>
+          <td class="muted">{{ r.created_at }}</td>
+          <td class="actions">
+            <form method="POST" action="{{ url_for('delete_client',cid=r.id) }}" class="confirm-delete" style="display:inline">
+              <button class="btn btn-danger btn-xs">🗑️ حذف</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px">
+            <span style="font-size:3rem">👤</span><br>
+            <p style="color:var(--text-muted);margin-top:10px">لا يوجد عملاء — أضف أول عميل</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div style="text-align:center;margin-top:20px;display:flex;justify-content:center;gap:8px;align-items:center;">
+  {% if page > 1 %}
+    <a href="?page={{ page-1 }}&q={{ kw }}" class="btn btn-ghost btn-sm">◀ السابق</a>
+  {% endif %}
+  <span style="color:var(--text-muted)">صفحة {{ page }} من {{ total_pages }}</span>
+  {% if page < total_pages %}
+    <a href="?page={{ page+1 }}&q={{ kw }}" class="btn btn-ghost btn-sm">التالي ▶</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
