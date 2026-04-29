@@ -1,0 +1,116 @@
+{{ csrf_token() }}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ company_name }} — نظام ERP</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗</text></svg>">
+</head>
+<body>
+
+{% if current_user %}
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">🏗️</span>
+    <div>
+      <div class="logo-name">{{ company_name }}</div>
+      <div class="logo-sub">نظام ERP العقاري</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    {% set nav_items = [
+      ('dashboard',    '📊', 'لوحة التحكم'),
+      ('properties',   '🏢', 'الوحدات العقارية'),
+      ('clients',      '👤', 'العملاء'),
+      ('contracts',    '📄', 'العقود'),
+      ('installments', '💳', 'الأقساط'),
+      ('hr',           '👥', 'الموارد البشرية'),
+      ('journal',      '📒', 'قيود اليومية'),
+      ('ledger',       '📗', 'دفتر الأستاذ'),
+      ('reports',      '📊', 'القوائم المالية'),
+      ('coa',          '🗂', 'دليل الحسابات'),
+      ('engineering',  '🏗', 'المشاريع الهندسية'),
+      ('analytics',    '📈', 'التحليلات'),
+      ('users',        '🔑', 'إدارة المستخدمين'),
+      ('settings',     '⚙️', 'الإعدادات'),
+    ] %}
+    {% for page_key, icon, label in nav_items %}
+      {% if page_key in allowed_pages %}
+      <a href="{{ url_for(page_key) }}"
+         class="nav-item {% if request.endpoint == page_key %}active{% endif %}">
+        <span class="nav-icon">{{ icon }}</span>
+        <span class="nav-label">{{ label }}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <span class="user-avatar">{{ full_name[0] if full_name else 'م' }}</span>
+      <div>
+        <div class="user-name">{{ full_name }}</div>
+        <div class="user-role">{{ current_role }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-btn">🚪 تسجيل خروج</a>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main-wrapper">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="sidebar-toggle" aria-label="تبديل القائمة">☰</button>
+    <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+    <div class="topbar-actions">
+      {% block topbar_actions %}{% endblock %}
+      
+      <!-- Theme Toggle -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="تبديل المظهر">🌙</button>
+      
+      <span class="topbar-date">📅 {{ today }}</span>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">
+        {% if cat == 'success' %}✅{% elif cat == 'error' %}❌{% else %}⚠️{% endif %}
+        {{ msg }}
+        <button onclick="this.parentElement.remove()">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+  
+  <!-- Footer -->
+  <footer style="text-align:center; padding:20px; color:var(--text-muted); font-size:.8rem; border-top:1px solid var(--border);">
+    <p>© 2026 {{ company_name }} — نظام ERP العقاري المتكامل</p>
+  </footer>
+</div><!-- /main-wrapper -->
+
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
