@@ -1,0 +1,113 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}المستخدمون{% endblock %}
+{% block content %}
+<div class="grid-2" style="margin-bottom:16px">
+  <div class="card">
+    <div class="card-header"><span class="card-title">🔑 إضافة مستخدم جديد</span></div>
+    <form method="POST" action="{{ url_for('add_user') }}">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group"><label>اسم المستخدم *</label><input type="text" name="username" required></div>
+        <div class="form-group"><label>الاسم الكامل</label><input type="text" name="full_name"></div>
+        <div class="form-group"><label>كلمة المرور *</label><input type="password" name="password" required minlength="4"></div>
+        <div class="form-group"><label>الصلاحية</label>
+          <select name="role">
+            {% for r in ['Admin','Accountant','Engineer','HR','Sales'] %}
+            <option value="{{ r }}">{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-footer"><button type="submit" class="btn btn-primary">+ إضافة مستخدم</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">📋 صلاحيات الأدوار</span></div>
+    <div class="card-body">
+      <table style="width:100%;font-size:.85rem">
+        <thead><tr><th>الدور</th><th>الصفحات المتاحة</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Admin</strong></td><td class="muted">كل الصفحات</td></tr>
+          <tr><td><strong>Accountant</strong></td><td class="muted">العملاء، العقود، الأقساط، المحاسبة، التقارير</td></tr>
+          <tr><td><strong>Engineer</strong></td><td class="muted">الوحدات، المشاريع، التحليلات</td></tr>
+          <tr><td><strong>HR</strong></td><td class="muted">الموارد البشرية</td></tr>
+          <tr><td><strong>Sales</strong></td><td class="muted">الوحدات، العملاء، العقود، الأقساط، التحليلات</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="card-title">👥 قائمة المستخدمين</span></div>
+  <div class="table-wrapper"><table>
+    <thead><tr><th>#</th><th>اسم المستخدم</th><th>الاسم الكامل</th><th>الصلاحية</th><th>تاريخ الإنشاء</th><th>الإجراءات</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="muted">{{ r.id }}</td>
+        <td><strong>{{ r.username }}</strong></td>
+        <td>{{ r.full_name or '—' }}</td>
+        <td><span class="badge {{'badge-danger' if r.role=='Admin' else 'badge-info' if r.role=='Accountant' else 'badge-success' if r.role=='Engineer' else 'badge-gray'}}">{{ r.role }}</span></td>
+        <td class="muted">{{ r.created_at }}</td>
+        <td class="actions">
+          <button onclick="openResetModal({{ r.id }})" class="btn btn-ghost btn-xs">🔒 تغيير كلمة المرور</button>
+          {% if r.username != 'admin' %}
+          <form method="POST" action="{{ url_for('delete_user', uid=r.id) }}" class="confirm-delete" style="display:inline">
+            <button class="btn btn-danger btn-xs">حذف</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">لا يوجد مستخدمون</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title">📋 سجل النشاط الأخير</span></div>
+  <div class="table-wrapper"><table>
+    <thead><tr><th>المستخدم</th><th>الإجراء</th><th>التفاصيل</th><th>الوقت</th></tr></thead>
+    <tbody>
+      {% for l in logs %}
+      <tr>
+        <td><strong>{{ l.username }}</strong></td>
+        <td>{{ l.action }}</td>
+        <td class="muted">{{ l.details or '—' }}</td>
+        <td class="muted">{{ l.logged_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">لا يوجد سجل نشاط</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal">
+    <h3>🔒 تغيير كلمة المرور</h3>
+    <form method="POST" id="reset-form">
+      <input type="hidden" id="reset-uid" value="">
+      <div class="form-group" style="margin-bottom:16px">
+        <label>كلمة المرور الجديدة (4 أحرف على الأقل)</label>
+        <input type="password" name="new_password" required minlength="4" style="width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px;font-family:var(--font)">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeResetModal()">إلغاء</button>
+        <button type="submit" class="btn btn-primary">تغيير</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('reset-form').addEventListener('submit', function(e) {
+  const uid = document.getElementById('reset-uid').value;
+  this.action = '/users/reset/' + uid;
+});
+</script>
+{% endblock %}
