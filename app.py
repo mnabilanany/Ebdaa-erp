@@ -13,6 +13,23 @@ from flask import (Flask, render_template, request, redirect,
 import sqlite3
 import bcrypt
 from flask_wtf.csrf import CSRFProtect
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# ── Database Configuration ─────────────────────────────────────────────────────
+# Get DATABASE_URL from environment (Railway/Supabase)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+USE_POSTGRES = bool(DATABASE_URL)
+
+if USE_POSTGRES:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    logger.info("Using PostgreSQL database (Supabase)")
+else:
+    logger.info("Using SQLite database (local)")
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -168,10 +185,23 @@ def verify_password(pw: str, hashed: str) -> bool:
 
 # ── DB ────────────────────────────────────────────────────────────────────────
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    """Get database connection - supports both PostgreSQL and SQLite"""
+    if USE_POSTGRES:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        return conn
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
+
+def dict_from_row(row):
+    """Convert database row to dict (works with both sqlite and psycopg2)"""
+    if row is None:
+        return None
+    if hasattr(row, '_asdict'):
+        return row._asdict()
+    return dict(row)
 
 def init_db():
     with get_db() as c:
