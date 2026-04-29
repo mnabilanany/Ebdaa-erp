@@ -1,0 +1,61 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block auth_content %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ company_name }} — تسجيل الدخول</title>
+<link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗</text></svg>">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-left">
+    <div class="login-brand">🏗️ {{ company_name }}</div>
+    <div class="login-tagline">نظام ERP العقاري المتكامل — إدارة ذكية لأعمالك</div>
+    
+    <div class="login-feature"><span>🏢</span> إدارة الوحدات والمشاريع العقارية</div>
+    <div class="login-feature"><span>📄</span> عقود البيع والإيجار وجدولة الأقساط</div>
+    <div class="login-feature"><span>📒</span> قيود يومية ودفتر أستاذ وقوائم مالية</div>
+    <div class="login-feature"><span>👥</span> إدارة العملاء والموارد البشرية</div>
+    <div class="login-feature"><span>📊</span> تقارير مالية احترافية PDF</div>
+    <div class="login-feature"><span>🔐</span> نظام صلاحيات متعدد المستخدمين</div>
+    <div class="login-feature"><span>🌙</span> وضع ليلي مريح للعين</div>
+  </div>
+  
+  <div class="login-right">
+    <h1 class="login-title">مرحباً بك مجدداً 👋</h1>
+    <p class="login-hint">سجل دخولك للوصول إلى لوحة التحكم</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="login-error">❌ {{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="login-field">
+        <label>👤 اسم المستخدم</label>
+        <input type="text" name="username" placeholder="أدخل اسم المستخدم" required autofocus autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>🔒 كلمة المرور</label>
+        <input type="password" name="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn">🚀 دخول</button>
+    </form>
+    
+    <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border); text-align:center;">
+      <p style="color:var(--text-muted); font-size:.82rem;">
+        🔑 بيانات الدخول الافتراضية:<br>
+        <strong>admin</strong> / <strong>1234</strong>
+      </p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+{% endblock %}
