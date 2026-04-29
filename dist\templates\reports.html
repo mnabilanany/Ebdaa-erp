@@ -1,0 +1,292 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}القوائم المالية والتقارير{% endblock %}
+{% block content %}
+
+<!-- Controls -->
+<div class="card" style="margin-bottom:16px">
+  <div class="card-body" style="padding:16px 20px">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group">
+        <label>من تاريخ</label>
+        <input type="date" name="from" value="{{ from_d }}">
+      </div>
+      <div class="form-group">
+        <label>إلى تاريخ</label>
+        <input type="date" name="to" value="{{ to_d }}">
+      </div>
+      <input type="hidden" name="type" value="{{ rpt }}">
+      <button type="submit" class="btn btn-primary">تحديث</button>
+    </form>
+    
+    <!-- Report Type Tabs -->
+    <div style="margin-top:14px">
+      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px">نوع التقرير:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="?type=trial_balance&from={{ from_d }}&to={{ to_d }}"
+           class="btn {{'btn-primary' if rpt=='trial_balance' else 'btn-ghost'}} btn-sm">
+           ⚖ ميزان المراجعة
+        </a>
+        <a href="?type=income_statement&from={{ from_d }}&to={{ to_d }}"
+           class="btn {{'btn-primary' if rpt=='income_statement' else 'btn-ghost'}} btn-sm">
+           📈 قائمة الدخل
+        </a>
+        <a href="?type=balance_sheet&from={{ from_d }}&to={{ to_d }}"
+           class="btn {{'btn-primary' if rpt=='balance_sheet' else 'btn-ghost'}} btn-sm">
+           📋 الميزانية العمومية
+        </a>
+      </div>
+    </div>
+    
+    <!-- Print Buttons -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-color)">
+      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:8px">طباعة PDF:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="/reports/pdf/trial_balance?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           📄 ميزان المراجعة
+        </a>
+        <a href="/reports/pdf/income_statement?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           📄 قائمة الدخل
+        </a>
+        <a href="/reports/pdf/balance_sheet?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           📄 الميزانية
+        </a>
+        <a href="/reports/pdf/clients?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           👥 العملاء
+        </a>
+        <a href="/reports/pdf/properties?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           🏢 الوحدات
+        </a>
+        <a href="/reports/pdf/installments?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           📅 الأقساط
+        </a>
+        <a href="/reports/pdf/employees?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           👨‍💼 الموظفين
+        </a>
+        <a href="/reports/pdf/projects?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           🏗 المشاريع
+        </a>
+        <a href="/reports/pdf/coa?from={{ from_d }}&to={{ to_d }}" 
+           class="btn btn-ghost btn-sm" target="_blank">
+           🗂 دليل الحسابات
+        </a>
+        <button onclick="window.print()" class="btn btn-ghost btn-sm" style="margin-right:auto">
+           🖨 طباعة الشاشة
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Content -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">
+        {% if rpt == 'trial_balance' %}⚖ ميزان المراجعة
+        {% elif rpt == 'income_statement' %}📈 قائمة الدخل الشامل
+        {% elif rpt == 'balance_sheet' %}📋 الميزانية العمومية
+        {% endif %}
+      </div>
+      <div class="muted" style="font-size:.8rem;margin-top:3px">{{ company_name }} &nbsp;|&nbsp; {{ from_d }} → {{ to_d }}</div>
+    </div>
+  </div>
+  <div class="table-wrapper">
+
+    {% if rpt == 'trial_balance' %}
+    <table>
+      <thead><tr><th>الكود</th><th>اسم الحساب</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+      <tbody>
+        {% set ns = namespace(tdr=0,tcr=0) %}
+        {% for b in balances %}
+        {% if b.total_debit > 0 or b.total_credit > 0 %}
+        {% set ns.tdr = ns.tdr + b.total_debit %}
+        {% set ns.tcr = ns.tcr + b.total_credit %}
+        <tr>
+          <td><code>{{ b.code }}</code></td>
+          <td>{{ b.name }}</td>
+          <td class="positive">{{ "{:,.2f}".format(b.total_debit) if b.total_debit else '—' }}</td>
+          <td class="negative">{{ "{:,.2f}".format(b.total_credit) if b.total_credit else '—' }}</td>
+          <td class="{{'positive' if b.balance>=0 else 'negative'}}"><strong>{{ "{:+,.2f}".format(b.balance) }}</strong></td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="rpt-total-row">
+          <td colspan="2" style="padding:10px 14px;font-weight:900">الإجمالي</td>
+          <td style="padding:10px 14px" class="positive"><strong>{{ "{:,.2f}".format(ns.tdr) }}</strong></td>
+          <td style="padding:10px 14px" class="negative"><strong>{{ "{:,.2f}".format(ns.tcr) }}</strong></td>
+          <td style="padding:10px 14px"><strong>{{ "{:+,.2f}".format(ns.tdr - ns.tcr) }}</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    {% elif rpt == 'income_statement' %}
+    <table>
+      <thead><tr><th>الكود</th><th>البيان</th><th>المبلغ ({{ currency }})</th></tr></thead>
+      <tbody>
+        <tr class="rpt-section-row" style="background:#27ae60;color:white"><td colspan="3">أولاً: الإيرادات</td></tr>
+        {% set total_rev = 0 %}
+        {% for item in income_data.revenue_detail %}
+        {% if item.total|float > 0 %}
+        {% set total_rev = total_rev + item.total|float %}
+        <tr>
+          <td><code>{{ item.code }}</code></td>
+          <td>{{ item.name }}</td>
+          <td class="positive">{{ "{:,.2f}".format(item.total|float) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        <tr class="rpt-total-row" style="background:#d5f5e3">
+          <td colspan="2" style="padding:10px 14px;font-weight:900">إجمالي الإيرادات</td>
+          <td style="padding:10px 14px" class="positive"><strong>{{ "{:,.2f}".format(total_rev) }}</strong></td>
+        </tr>
+        
+        <tr><td colspan="3" style="padding:16px"></td></tr>
+        
+        <tr class="rpt-section-row" style="background:#c0392b;color:white"><td colspan="3">ثانياً: المصروفات</td></tr>
+        {% set total_exp = 0 %}
+        {% for item in income_data.expense_detail %}
+        {% if item.total|float > 0 %}
+        {% set total_exp = total_exp + item.total|float %}
+        <tr>
+          <td><code>{{ item.code }}</code></td>
+          <td>{{ item.name }}</td>
+          <td class="negative">{{ "{:,.2f}".format(item.total|float) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        <tr class="rpt-total-row" style="background:#fadbd8">
+          <td colspan="2" style="padding:10px 14px;font-weight:900">إجمالي المصروفات</td>
+          <td style="padding:10px 14px" class="negative"><strong>{{ "{:,.2f}".format(total_exp) }}</strong></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        {% set net_profit = total_rev - total_exp %}
+        <tr class="rpt-grand-row" style="background:#2874a6;color:white">
+          <td colspan="2" style="padding:14px 14px;font-weight:900">
+            {{ 'صافي الربح' if net_profit >= 0 else 'صافي الخسارة' }}
+          </td>
+          <td style="padding:14px 14px;font-size:1.1rem">
+            <strong>{{ "{:+,.2f}".format(net_profit) }} {{ currency }}</strong>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+
+    {% elif rpt == 'balance_sheet' %}
+    <table>
+      <thead><tr><th>الكود</th><th>البيان</th><th>المبلغ ({{ currency }})</th></tr></thead>
+      <tbody>
+        {% set total_assets = 0 %}
+        <tr class="rpt-section-row" style="background:#2874a6;color:white"><td colspan="3">الأصول</td></tr>
+        {% for item in balance_data.assets %}
+        {% if item.balance|float > 0 %}
+        {% set total_assets = total_assets + item.balance|float %}
+        <tr>
+          <td><code>{{ item.code }}</code></td>
+          <td>{{ item.name }}</td>
+          <td class="positive">{{ "{:,.2f}".format(item.balance|float) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        <tr class="rpt-total-row" style="background:#d5dbdb">
+          <td colspan="2" style="padding:10px 14px;font-weight:900">إجمالي الأصول</td>
+          <td style="padding:10px 14px" class="positive"><strong>{{ "{:,.2f}".format(total_assets) }}</strong></td>
+        </tr>
+        
+        <tr><td colspan="3" style="padding:16px"></td></tr>
+        
+        {% set total_liab = 0 %}
+        <tr class="rpt-section-row" style="background:#e74c3c;color:white"><td colspan="3">الالتزامات</td></tr>
+        {% for item in balance_data.liabilities %}
+        {% if item.balance|float > 0 %}
+        {% set total_liab = total_liab + item.balance|float %}
+        <tr>
+          <td><code>{{ item.code }}</code></td>
+          <td>{{ item.name }}</td>
+          <td class="negative">{{ "{:,.2f}".format(item.balance|float) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        <tr class="rpt-total-row" style="background:#fadbd8">
+          <td colspan="2" style="padding:10px 14px;font-weight:900">إجمالي الالتزامات</td>
+          <td style="padding:10px 14px" class="negative"><strong>{{ "{:,.2f}".format(total_liab) }}</strong></td>
+        </tr>
+        
+        <tr><td colspan="3" style="padding:16px"></td></tr>
+        
+        {% set total_eq = 0 %}
+        <tr class="rpt-section-row" style="background:#27ae60;color:white"><td colspan="3">حقوق الملكية</td></tr>
+        {% for item in balance_data.equity %}
+        {% if item.balance|float > 0 %}
+        {% set total_eq = total_eq + item.balance|float %}
+        <tr>
+          <td><code>{{ item.code }}</code></td>
+          <td>{{ item.name }}</td>
+          <td>{{ "{:,.2f}".format(item.balance|float) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        {% if balance_data.net_profit|float > 0 %}
+        {% set total_eq = total_eq + balance_data.net_profit|float %}
+        <tr>
+          <td><code>3410</code></td>
+          <td>صافي ربح الفترة</td>
+          <td class="positive">{{ "{:,.2f}".format(balance_data.net_profit|float) }}</td>
+        </tr>
+        {% endif %}
+        <tr class="rpt-total-row" style="background:#d5f5e3">
+          <td colspan="2" style="padding:10px 14px;font-weight:900">إجمالي حقوق الملكية</td>
+          <td style="padding:10px 14px"><strong>{{ "{:,.2f}".format(total_eq) }}</strong></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        {% set total_liab_eq = total_liab + total_eq %}
+        <tr class="rpt-grand-row" style="background:#1a5276;color:white">
+          <td colspan="2" style="padding:14px 14px;font-weight:900">
+            إجمالي الالتزامات وحقوق الملكية
+          </td>
+          <td style="padding:14px 14px;font-size:1.1rem">
+            <strong>{{ "{:,.2f}".format(total_liab_eq) }} {{ currency }}</strong>
+          </td>
+        </tr>
+        {% if (total_assets - total_liab_eq)|abs < 0.01 %}
+        <tr style="background:#d5f5e3">
+          <td colspan="3" style="padding:8px 14px;text-align:center;color:#27ae60">
+            ✓ الميزانية متوازنة
+          </td>
+        </tr>
+        {% else %}
+        <tr style="background:#fadbd8">
+          <td colspan="3" style="padding:8px 14px;text-align:center;color:#c0392b">
+            ⚠ الفرق: {{ "{:,.2f}".format((total_assets - total_liab_eq)|abs) }}
+          </td>
+        </tr>
+        {% endif %}
+      </tfoot>
+    </table>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+@media print {
+  .sidebar, .topbar, .card:first-child, .btn { display: none !important; }
+  .main-wrapper { margin: 0 !important; padding: 0 !important; }
+  .card { border: none !important; box-shadow: none !important; }
+  .table-wrapper { overflow: visible !important; }
+}
+</style>
+{% endblock %}
