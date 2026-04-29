@@ -1,0 +1,67 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-box">
+        <h1 class="error-code">{{ code }}</h1>
+        <h2 class="error-message">{{ message }}</h2>
+        
+        {% if code == 404 %}
+        <p class="error-description">عذراً، الصفحة التي تبحث عنها غير موجودة.</p>
+        {% elif code == 500 %}
+        <p class="error-description">حدث خطأ في الخادم. يرجى المحاولة مجدداً لاحقاً.</p>
+        {% elif code == 403 %}
+        <p class="error-description">ليس لديك صلاحيات للوصول إلى هذا المورد.</p>
+        {% endif %}
+        
+        <div class="error-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">العودة للصفحة الرئيسية</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">رجوع</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.error-box {
+    text-align: center;
+    padding: 40px;
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    background: #fadbd8;
+}
+
+.error-code {
+    font-size: 72px;
+    color: #c0392b;
+    margin: 0;
+}
+
+.error-message {
+    font-size: 24px;
+    color: #333;
+    margin: 10px 0;
+}
+
+.error-description {
+    font-size: 16px;
+    color: #555;
+    margin: 20px 0;
+}
+
+.error-actions {
+    margin-top: 30px;
+}
+
+.error-actions .btn {
+    margin: 0 10px;
+}
+</style>
+{% endblock %}
