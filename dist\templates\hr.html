@@ -1,0 +1,41 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}الموارد البشرية{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="card-title">👥 إضافة موظف</span></div>
+  <form method="POST" action="{{ url_for('add_employee') }}">
+    <div class="form-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="form-group"><label>الاسم *</label><input type="text" name="name" required></div>
+      <div class="form-group"><label>القسم</label><input type="text" name="department"></div>
+      <div class="form-group"><label>المسمى الوظيفي</label><input type="text" name="job_title"></div>
+      <div class="form-group"><label>الراتب</label><input type="number" name="salary" step="0.01" value="0"></div>
+      <div class="form-group"><label>تاريخ التعيين</label><input type="date" name="hire_date" value="{{ today }}"></div>
+      <div class="form-group"><label>الهاتف</label><input type="text" name="phone"></div>
+    </div>
+    <div class="form-footer"><button type="submit" class="btn btn-primary">+ إضافة</button></div>
+  </form>
+</div>
+<div class="toolbar">
+  <form method="GET" style="display:contents">
+    <input type="text" name="q" value="{{ kw }}" placeholder="بحث في الموظفين...">
+    <button type="submit" class="btn btn-ghost btn-sm">🔍 بحث</button>
+    <a href="/hr/pdf" class="btn btn-ghost btn-sm" target="_blank">📄 طباعة PDF</a>
+  </form>
+</div>
+<div class="card"><div class="table-wrapper"><table>
+  <thead><tr><th>#</th><th>الاسم</th><th>القسم</th><th>المسمى</th><th>الراتب</th><th>تاريخ التعيين</th><th>الهاتف</th><th>الإجراءات</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="muted">{{ r.id }}</td><td><strong>{{ r.name }}</strong></td>
+      <td>{{ r.department }}</td><td>{{ r.job_title }}</td>
+      <td class="positive">{{ "{:,.2f}".format(r.salary) }}</td>
+      <td class="muted">{{ r.hire_date }}</td><td>{{ r.phone or '—' }}</td>
+      <td><form method="POST" action="{{ url_for('delete_employee',eid=r.id) }}" class="confirm-delete" style="display:inline">
+        <button class="btn btn-danger btn-xs">حذف</button></form></td>
+    </tr>
+    {% else %}<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">لا يوجد موظفون</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}
