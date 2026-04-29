@@ -1,0 +1,79 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}دفتر الأستاذ العام{% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-body" style="padding:16px 20px">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="min-width:260px">
+        <label>الحساب</label>
+        <select name="account_id">
+          <option value="">-- كل الحسابات --</option>
+          {% for a in posting %}
+          <option value="{{ a.id }}" {{'selected' if sel_account|string==a.id|string}}>
+            {{ a.code }} - {{ a.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>من تاريخ</label>
+        <input type="date" name="from" value="{{ from_d }}">
+      </div>
+      <div class="form-group">
+        <label>إلى تاريخ</label>
+        <input type="date" name="to" value="{{ to_d }}">
+      </div>
+      <button type="submit" class="btn btn-primary">📗 عرض الأستاذ</button>
+      <a href="{{ url_for('ledger') }}" class="btn btn-ghost">إعادة تعيين</a>
+    </form>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+  <div class="kpi-card green">
+    <div class="kpi-value" style="font-size:1.4rem">{{ "{:,.2f}".format(dr_tot) }}</div>
+    <div class="kpi-label">إجمالي المدين</div>
+  </div>
+  <div class="kpi-card warn">
+    <div class="kpi-value" style="font-size:1.4rem">{{ "{:,.2f}".format(cr_tot) }}</div>
+    <div class="kpi-label">إجمالي الدائن</div>
+  </div>
+  <div class="kpi-card {% if net >= 0 %}accent{% else %}warn{% endif %}">
+    <div class="kpi-value" style="font-size:1.4rem">{{ "{:+,.2f}".format(net) }}</div>
+    <div class="kpi-label">الرصيد الصافي</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">سجل دفتر الأستاذ</span>
+    <span class="muted" style="font-size:.82rem">{{ rows|length }} حركة</span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr>
+        <th>التاريخ</th><th>رقم القيد</th><th>الحساب</th>
+        <th>الوصف</th><th>مدين</th><th>دائن</th><th>الرصيد التراكمي</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="muted">{{ r.entry_date }}</td>
+          <td><a href="{{ url_for('journal_entry_detail', eid=0) }}" style="color:var(--primary)"><code>{{ r.entry_number }}</code></a></td>
+          <td><code>{{ r.code }}</code> {{ r.acc_name }}</td>
+          <td class="muted">{{ r.entry_desc or r.line_desc or '—' }}</td>
+          <td class="positive">{{ "{:,.2f}".format(r.debit) if r.debit else '—' }}</td>
+          <td class="negative">{{ "{:,.2f}".format(r.credit) if r.credit else '—' }}</td>
+          <td class="{{'positive' if r.running_bal>=0 else 'negative'}}"><strong>{{ "{:+,.2f}".format(r.running_bal) }}</strong></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">لا توجد حركات مطابقة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
