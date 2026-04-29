@@ -1,0 +1,50 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}التحليلات{% endblock %}
+{% block content %}
+<div class="kpi-grid">
+  <div class="kpi-card green"><div class="kpi-value" style="font-size:1.4rem">{{ "{:,.0f}".format(sm.revenue) }}</div><div class="kpi-label">إجمالي الإيرادات</div></div>
+  <div class="kpi-card warn"><div class="kpi-value" style="font-size:1.4rem">{{ "{:,.0f}".format(sm.expense) }}</div><div class="kpi-label">إجمالي المصروفات</div></div>
+  <div class="kpi-card accent"><div class="kpi-value" style="font-size:1.4rem">{{ "{:+,.0f}".format(sm.net) }}</div><div class="kpi-label">صافي الربح</div></div>
+  <div class="kpi-card"><div class="kpi-value">{{ sm.units }}</div><div class="kpi-label">إجمالي الوحدات</div></div>
+  <div class="kpi-card green"><div class="kpi-value">{{ sm.available }}</div><div class="kpi-label">وحدات متاحة</div></div>
+  <div class="kpi-card"><div class="kpi-value">{{ sm.sold }}</div><div class="kpi-label">وحدات مباعة</div></div>
+  <div class="kpi-card warn"><div class="kpi-value">{{ sm.overdue }}</div><div class="kpi-label">أقساط متأخرة</div></div>
+  <div class="kpi-card"><div class="kpi-value" style="font-size:1.4rem">{{ "{:,.0f}".format(sm.collected) }}</div><div class="kpi-label">تحصيلات</div></div>
+</div>
+<div class="grid-2" style="margin-top:20px">
+  <div class="card">
+    <div class="card-header"><span class="card-title">📊 أداء المشاريع</span></div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>المشروع</th><th>الحالة</th><th>الإيرادات</th><th>المصروفات</th><th>الوحدات</th><th>مباع</th></tr></thead>
+      <tbody>
+        {% for r in per_proj %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td>
+          <td><span class="badge {{'badge-success' if r.status=='Active' else 'badge-gray'}}">{{ r.status }}</span></td>
+          <td class="positive">{{ "{:,.0f}".format(r.revenue) }}</td>
+          <td class="negative">{{ "{:,.0f}".format(r.expense) }}</td>
+          <td>{{ r.units }}</td><td>{{ r.sold }}</td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد مشاريع</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">📅 الأداء الشهري</span></div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>الشهر</th><th>إيرادات</th><th>مصروفات</th><th>صافي</th></tr></thead>
+      <tbody>
+        {% for r in monthly %}
+        <tr>
+          <td><strong>{{ r.month }}</strong></td>
+          <td class="positive">{{ "{:,.0f}".format(r.revenue) }}</td>
+          <td class="negative">{{ "{:,.0f}".format(r.expense) }}</td>
+          <td class="{{'positive' if r.revenue - r.expense >= 0 else 'negative'}}">{{ "{:+,.0f}".format(r.revenue - r.expense) }}</td>
+        </tr>
+        {% else %}<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد بيانات</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}
