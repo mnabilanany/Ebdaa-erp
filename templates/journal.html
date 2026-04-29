@@ -1,0 +1,139 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}قيود اليومية{% endblock %}
+{% block scripts %}
+<script>
+window.POSTING_ACCOUNTS = {{ posting | tojson }};
+</script>
+{% endblock %}
+{% block content %}
+
+<!-- New Entry Form -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header">
+    <span class="card-title">📒 قيد يومية جديد — قيد مزدوج</span>
+  </div>
+  <form method="POST" action="{{ url_for('add_journal_entry') }}" id="je-form">
+    <div class="form-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="form-group">
+        <label>التاريخ *</label>
+        <input type="date" name="entry_date" value="{{ today }}" required>
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label>الوصف *</label>
+        <input type="text" name="description" placeholder="وصف القيد" required>
+      </div>
+      <div class="form-group">
+        <label>المرجع</label>
+        <input type="text" name="reference" placeholder="رقم الفاتورة / المستند">
+      </div>
+      <div class="form-group">
+        <label>المشروع</label>
+        <select name="project_id">
+          <option value="">-- بدون مشروع --</option>
+          {% for p in projects %}
+          <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Lines -->
+    <div style="padding:0 20px 12px">
+      <div class="section-label">سطور القيد</div>
+      <div class="je-lines-header">
+        <span>الحساب</span><span>الوصف</span><span>مدين</span><span>دائن</span><span></span>
+      </div>
+      <div id="je-lines-body">
+        {% for i in range(3) %}
+        <div class="je-line-row">
+          <select name="account_id[]">
+            <option value="">-- اختر الحساب --</option>
+            {% for a in posting %}
+            <option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="line_desc[]" placeholder="وصف البند">
+          <input type="number" name="debit[]"  step="0.01" min="0" value="0" oninput="updateTotals()">
+          <input type="number" name="credit[]" step="0.01" min="0" value="0" oninput="updateTotals()">
+          <button type="button" class="btn btn-danger btn-xs" onclick="removeJELine(this)">✕</button>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:10px">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addJELine()">+ إضافة سطر</button>
+      </div>
+
+      <div class="je-totals">
+        <div>
+          <div class="lbl">إجمالي المدين</div>
+          <div id="je-dr-total" style="color:var(--primary);font-size:1.1rem">0.00</div>
+        </div>
+        <div>
+          <div class="lbl">إجمالي الدائن</div>
+          <div id="je-cr-total" style="color:var(--primary);font-size:1.1rem">0.00</div>
+        </div>
+        <div>
+          <div class="lbl">الفرق</div>
+          <div id="je-diff" style="color:var(--danger);font-size:1.1rem">0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary">✔ ترحيل القيد</button>
+    </div>
+  </form>
+</div>
+
+<!-- Filter -->
+<div class="toolbar">
+  <form method="GET" style="display:contents">
+    <input type="text" name="q" value="{{ kw }}" placeholder="بحث في القيود...">
+    <input type="date" name="from" value="{{ from_d }}" title="من تاريخ">
+    <input type="date" name="to"   value="{{ to_d }}"   title="إلى تاريخ">
+    <button type="submit" class="btn btn-ghost btn-sm">🔍 بحث</button>
+    <a href="/journal/pdf?from={{ from_d }}&to={{ to_d }}" class="btn btn-ghost btn-sm" target="_blank">📄 طباعة PDF</a>
+  </form>
+  <div class="spacer"></div>
+  <a href="{{ url_for('journal') }}" class="btn btn-ghost btn-sm">إعادة تعيين</a>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">سجل قيود اليومية</span>
+    <span class="muted" style="font-size:.82rem">{{ rows|length }} قيد</span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr>
+        <th>رقم القيد</th><th>التاريخ</th><th>الوصف</th>
+        <th>المرجع</th><th>مدين</th><th>دائن</th><th>الحالة</th><th>الإجراءات</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><a href="{{ url_for('journal_entry_detail', eid=r.id) }}" style="color:var(--primary);font-weight:700">{{ r.entry_number }}</a></td>
+          <td class="muted">{{ r.entry_date }}</td>
+          <td>{{ r.description }}</td>
+          <td class="muted">{{ r.reference or '—' }}</td>
+          <td class="positive">{{ "{:,.2f}".format(r.dr) }}</td>
+          <td class="negative">{{ "{:,.2f}".format(r.cr) }}</td>
+          <td><span class="badge badge-success">مرحّل</span></td>
+          <td class="actions">
+            <a href="{{ url_for('journal_entry_detail', eid=r.id) }}" class="btn btn-ghost btn-xs">👁 تفاصيل</a>
+            <form method="POST" action="{{ url_for('delete_journal_entry', eid=r.id) }}" class="confirm-delete" style="display:inline">
+              <button type="submit" class="btn btn-danger btn-xs">حذف</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">لا توجد قيود مطابقة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
