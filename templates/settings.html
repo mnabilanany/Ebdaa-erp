@@ -1,0 +1,49 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}الإعدادات{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><span class="card-title">⚙ إعدادات الشركة</span></div>
+    <form method="POST" action="{{ url_for('settings') }}">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group"><label>اسم الشركة *</label>
+          <input type="text" name="company_name" value="{{ cfg.company_name }}" required></div>
+        <div class="form-group"><label>رمز العملة</label>
+          <input type="text" name="currency" value="{{ cfg.currency }}"></div>
+        <div class="form-group"><label>هاتف الشركة</label>
+          <input type="text" name="company_phone" value="{{ cfg.company_phone or '' }}"></div>
+        <div class="form-group"><label>البريد الإلكتروني</label>
+          <input type="email" name="company_email" value="{{ cfg.company_email or '' }}"></div>
+        <div class="form-group"><label>عنوان الشركة</label>
+          <textarea name="company_address">{{ cfg.company_address or '' }}</textarea></div>
+      </div>
+      <div class="form-footer"><button type="submit" class="btn btn-primary">💾 حفظ الإعدادات</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">🔒 تغيير كلمة المرور</span></div>
+    <form method="POST" action="{{ url_for('settings') }}">
+      <input type="hidden" name="company_name" value="{{ cfg.company_name }}">
+      <input type="hidden" name="currency" value="{{ cfg.currency }}">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group"><label>كلمة المرور الجديدة</label>
+          <input type="password" name="new_password" minlength="4" placeholder="اتركها فارغة إن لم تريد التغيير"></div>
+      </div>
+      <div class="form-footer"><button type="submit" class="btn btn-accent">🔒 تغيير كلمة المرور</button></div>
+    </form>
+
+    <div class="card-body" style="border-top:1px solid var(--border);padding-top:16px">
+      <div class="section-label">معلومات النظام</div>
+      <table style="width:100%;font-size:.85rem">
+        <tr><td class="muted" style="padding:5px 0">النظام</td><td><strong>إبداع ERP — نظام ويب</strong></td></tr>
+        <tr><td class="muted" style="padding:5px 0">قاعدة البيانات</td><td><strong>SQLite</strong></td></tr>
+        <tr><td class="muted" style="padding:5px 0">اسم المستخدم الحالي</td><td><strong>{{ current_user }}</strong></td></tr>
+        <tr><td class="muted" style="padding:5px 0">الصلاحية</td><td><strong>{{ current_role }}</strong></td></tr>
+        <tr><td class="muted" style="padding:5px 0">التاريخ اليوم</td><td><strong>{{ today }}</strong></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
