@@ -1,0 +1,164 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}لوحة التحكم الرئيسية{% endblock %}
+{% block content %}
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-value">{{ data.projects }}</div>
+    <div class="kpi-label">🏗️ إجمالي المشاريع</div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="kpi-value">{{ data.units }}</div>
+    <div class="kpi-label">🏢 إجمالي الوحدات</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-value">{{ data.available }}</div>
+    <div class="kpi-label">✅ وحدات متاحة</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">{{ data.clients }}</div>
+    <div class="kpi-label">👥 إجمالي العملاء</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-value">{{ data.active_contracts }}</div>
+    <div class="kpi-label">📄 عقود نشطة</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value" style="font-size:1.5rem">{{ "{:,.0f}".format(data.revenue) }}</div>
+    <div class="kpi-label">💰 إجمالي الإيرادات</div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="kpi-value" style="font-size:1.5rem">{{ "{:,.0f}".format(data.net) }}</div>
+    <div class="kpi-label">📈 صافي الربح</div>
+  </div>
+  <div class="kpi-card warn">
+    <div class="kpi-value">{{ data.overdue }}</div>
+    <div class="kpi-label">⚠️ أقساط متأخرة</div>
+  </div>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dash-grid">
+  <!-- Recent Journal Entries -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📒 آخر قيود اليومية</span>
+      <a href="{{ url_for('journal') }}" class="btn btn-ghost btn-sm">عرض الكل ←</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم القيد</th>
+            <th>📅 التاريخ</th>
+            <th>الوصف</th>
+            <th>💰 مدين</th>
+            <th>💰 دائن</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in data.recent_je %}
+          <tr>
+            <td><code style="background:var(--primary-lt);padding:3px 8px;border-radius:4px">{{ r.entry_number }}</code></td>
+            <td class="muted">{{ r.entry_date }}</td>
+            <td>{{ r.description[:45] }}{% if r.description|length > 45 %}...{% endif %}</td>
+            <td class="positive">{{ "{:,.2f}".format(r.dr) }}</td>
+            <td class="negative">{{ "{:,.2f}".format(r.cr) }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="muted" style="text-align:center;padding:28px">
+              <span style="font-size:2rem">📭</span><br>
+              لا توجد قيود بعد — ابدأ بإضافة أول قيد محاسبي
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Overdue Installments Alert -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="color:var(--danger)">⚠️ أقساط متأخرة</span>
+      <a href="{{ url_for('installments',status='Overdue') }}" class="btn btn-ghost btn-sm">عرض الكل ←</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>العميل</th>
+            <th>العقد</th>
+            <th>الاستحقاق</th>
+            <th>المبلغ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in data.overdue_inst %}
+          <tr>
+            <td>{{ r.full_name }}</td>
+            <td><code>{{ r.contract_number }}</code></td>
+            <td style="color:var(--danger);font-weight:700">{{ r.due_date }}</td>
+            <td class="negative" style="font-weight:700">{{ "{:,.2f}".format(r.amount) }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="muted" style="text-align:center;padding:28px">
+              <span style="font-size:2rem">✅</span><br>
+              لا توجد أقساط متأخرة
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Projects Snapshot -->
+<div class="card" style="margin-top:24px">
+  <div class="card-header">
+    <span class="card-title">🏗️ المشاريع العقارية</span>
+    <a href="{{ url_for('engineering') }}" class="btn btn-primary btn-sm">+ إضافة مشروع</a>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>المشروع</th>
+          <th>المطور</th>
+          <th>الحالة</th>
+          <th>المرحلة</th>
+          <th>💰 الميزانية</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in data.recent_proj %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td>
+          <td class="muted">{{ r.client }}</td>
+          <td>
+            <span class="badge {{'badge-success' if r.status=='Active' else 'badge-gray'}}">
+              {% if r.status=='Active' %}🟢 نشط{% else %}⚪{{ r.status }}{% endif %}
+            </span>
+          </td>
+          <td>{{ r.stage }}</td>
+          <td class="positive">{{ "{:,.0f}".format(r.budget) }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="muted" style="text-align:center;padding:28px">
+            <span style="font-size:2rem">🏗️</span><br>
+            لا توجد مشاريع بعد — أنشئ أول مشروع
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
