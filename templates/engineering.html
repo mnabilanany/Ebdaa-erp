@@ -1,0 +1,49 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}المشاريع{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="card-title">🏗 مشروع جديد</span></div>
+  <form method="POST" action="{{ url_for('add_project') }}">
+    <div class="form-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="form-group"><label>اسم المشروع *</label><input type="text" name="name" required></div>
+      <div class="form-group"><label>المطور / العميل</label><input type="text" name="client"></div>
+      <div class="form-group"><label>المدير</label><input type="text" name="manager"></div>
+      <div class="form-group"><label>الميزانية</label><input type="number" name="budget" step="0.01" value="0"></div>
+      <div class="form-group"><label>الحالة</label>
+        <select name="status"><option>Active</option><option>On Hold</option><option>Completed</option></select></div>
+      <div class="form-group"><label>المرحلة</label>
+        <select name="stage">{% for s in ['Planning','Foundation','Structure','Finishing','Handover','Completed'] %}<option>{{ s }}</option>{% endfor %}</select></div>
+      <div class="form-group"><label>الموقع</label><input type="text" name="location"></div>
+      <div class="form-group"><label>تاريخ البداية</label><input type="date" name="start_date" value="{{ today }}"></div>
+    </div>
+    <div class="form-footer"><button type="submit" class="btn btn-primary">+ إضافة</button></div>
+  </form>
+</div>
+<div class="toolbar">
+  <form method="GET" style="display:contents">
+    <input type="text" name="q" value="{{ kw }}" placeholder="بحث...">
+    <select name="status"><option value="All">كل الحالات</option>
+      {% for s in ['Active','On Hold','Completed'] %}<option {{'selected' if status_filter==s}}>{{ s }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-ghost btn-sm">🔍 بحث</button>
+    <a href="/engineering/pdf" class="btn btn-ghost btn-sm" target="_blank">📄 طباعة PDF</a>
+  </form>
+</div>
+<div class="card"><div class="table-wrapper"><table>
+  <thead><tr><th>المشروع</th><th>المطور</th><th>المدير</th><th>الميزانية</th><th>الحالة</th><th>المرحلة</th><th>الوحدات</th><th>مباع</th><th>الإجراءات</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><strong>{{ r.name }}</strong></td><td>{{ r.client }}</td><td class="muted">{{ r.manager }}</td>
+      <td class="positive">{{ "{:,.0f}".format(r.budget) }}</td>
+      <td><span class="badge {{'badge-success' if r.status=='Active' else 'badge-gray'}}">{{ r.status }}</span></td>
+      <td><span class="badge badge-info">{{ r.stage }}</span></td>
+      <td>{{ r.units_count }}</td><td>{{ r.sold_count }}</td>
+      <td><form method="POST" action="{{ url_for('delete_project',pid=r.id) }}" class="confirm-delete" style="display:inline">
+        <button class="btn btn-danger btn-xs">حذف</button></form></td>
+    </tr>
+    {% else %}<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">لا توجد مشاريع</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}
