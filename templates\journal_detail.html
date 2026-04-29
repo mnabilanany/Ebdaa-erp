@@ -1,0 +1,47 @@
+{{ csrf_token() }}
+{% extends "base.html" %}
+{% block page_title %}تفاصيل القيد — {{ entry.entry_number }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📒 {{ entry.entry_number }}</span>
+    <a href="{{ url_for('journal') }}" class="btn btn-ghost btn-sm">← عودة</a>
+  </div>
+  <div class="card-body">
+    <div class="grid-3" style="margin-bottom:20px">
+      <div><span class="section-label">التاريخ</span><strong>{{ entry.entry_date }}</strong></div>
+      <div><span class="section-label">المرجع</span><strong>{{ entry.reference or '—' }}</strong></div>
+      <div><span class="section-label">أنشئ بواسطة</span><strong>{{ entry.created_by or '—' }}</strong></div>
+    </div>
+    <div style="margin-bottom:20px"><span class="section-label">الوصف</span><strong>{{ entry.description }}</strong></div>
+
+    <div class="section-label">سطور القيد</div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>الحساب</th><th>اسم الحساب</th><th>الوصف</th><th>مدين</th><th>دائن</th></tr></thead>
+        <tbody>
+          {% set ns = namespace(dr=0, cr=0) %}
+          {% for l in lines %}
+          {% set ns.dr = ns.dr + l.debit %}
+          {% set ns.cr = ns.cr + l.credit %}
+          <tr>
+            <td><code>{{ l.code }}</code></td>
+            <td><strong>{{ l.acc_name }}</strong></td>
+            <td class="muted">{{ l.description or '—' }}</td>
+            <td class="positive">{{ "{:,.2f}".format(l.debit) if l.debit else '—' }}</td>
+            <td class="negative">{{ "{:,.2f}".format(l.credit) if l.credit else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#F1F5FB;font-weight:900">
+            <td colspan="3" style="text-align:left;padding:10px 14px">الإجمالي</td>
+            <td class="positive" style="padding:10px 14px">{{ "{:,.2f}".format(ns.dr) }}</td>
+            <td class="negative" style="padding:10px 14px">{{ "{:,.2f}".format(ns.cr) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
